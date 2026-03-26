@@ -5,9 +5,9 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from datetime import datetime
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'NAMATUI_INVEST_ULTIMATE_2026'
+app.config['SECRET_KEY'] = 'NAMATUI_STATI_PREMIUM_2026'
 
-# Database Configuration (SQLite)
+# Database Configuration
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'namatui_investment.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -16,7 +16,7 @@ db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# --- DATABASE MODELS ---
+# --- MODELS ---
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -30,6 +30,7 @@ class Property(db.Model):
     price = db.Column(db.Float)
     features = db.Column(db.String(200)) 
     image_url = db.Column(db.String(500))
+    status = db.Column(db.String(20), default='Available') # Available or Sold
 
 class Inquiry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -42,15 +43,13 @@ class Inquiry(db.Model):
 @login_manager.user_loader
 def load_user(id): return User.query.get(int(id))
 
-# --- INITIALIZE DATABASE & ADMIN ACCOUNT ---
 with app.app_context():
     db.create_all()
-    admin = User.query.filter_by(username='admin').first()
-    if not admin:
+    if not User.query.filter_by(username='admin').first():
         db.session.add(User(username='admin', password='namatui2026'))
         db.session.commit()
 
-# --- PUBLIC ROUTES ---
+# --- ROUTES ---
 @app.route('/')
 def index():
     loc = request.args.get('location')
@@ -82,7 +81,6 @@ def login():
         flash('Invalid Username or Password')
     return render_template('login.html')
 
-# --- ADMIN ROUTES ---
 @app.route('/admin')
 @login_required
 def admin_dashboard():
@@ -90,15 +88,29 @@ def admin_dashboard():
     inquiries = Inquiry.query.order_by(Inquiry.timestamp.desc()).all()
     return render_template('admin.html', properties=properties, inquiries=inquiries)
 
-@app.route('/admin/upload', methods=['POST'])
+@app.route('/admin/save', methods=['POST'])
 @login_required
-def upload():
-    new_p = Property(title=request.form.get('title'), location=request.form.get('location'), 
-                     property_type=request.form.get('type'), price=float(request.form.get('price')), 
-                     features=request.form.get('features'), image_url=request.form.get('image_url'))
-    db.session.add(new_p)
+def save_property():
+    p_id = request.form.get('property_id')
+    if p_id: 
+        p = Property.query.get(p_id)
+        p.title = request.form.get('title')
+        p.location = request.form.get('location')
+        p.property_type = request.form.get('type')
+        p.price = float(request.form.get('price'))
+        p.features = request.form.get('features')
+        p.image_url = request.form.get('image_url')
+        p.status = request.form.get('status')
+        flash('Listing updated!')
+    else: 
+        new_p = Property(title=request.form.get('title'), location=request.form.get('location'), 
+                         property_type=request.form.get('type'), price=float(request.form.get('price')), 
+                         features=request.form.get('features'), image_url=request.form.get('image_url'),
+                         status=request.form.get('status'))
+        db.session.add(new_p)
+        flash('New Listing Published!')
+    
     db.session.commit()
-    flash('Listing added successfully!')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/delete/<int:id>', methods=['POST'])
