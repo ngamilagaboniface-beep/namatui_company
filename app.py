@@ -5,9 +5,12 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from datetime import datetime
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'NAMATUI_STATI_PREMIUM_2026'
 
-# Database Configuration
+# --- CONFIGURATION ---
+# Uses a secret key from Render environment variables for security
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'NAMATUI_STATI_PREMIUM_2026')
+
+# Robust Database Path for Render
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'namatui_investment.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -41,22 +44,29 @@ class Inquiry(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 @login_manager.user_loader
-def load_user(id): return User.query.get(int(id))
+def load_user(id):
+    return User.query.get(int(id))
 
+# --- DATABASE INITIALIZATION ---
 with app.app_context():
     db.create_all()
     if not User.query.filter_by(username='admin').first():
         db.session.add(User(username='admin', password='namatui2026'))
         db.session.commit()
 
-# --- ROUTES ---
+# --- PUBLIC ROUTES ---
 @app.route('/')
 def index():
     loc = request.args.get('location')
     query = Property.query
-    if loc: query = query.filter(Property.location.contains(loc))
+    if loc:
+        query = query.filter(Property.location.contains(loc))
     properties = query.order_by(Property.id.desc()).all()
     return render_template('index.html', properties=properties)
+
+@app.route('/health')
+def health_check():
+    return "OK", 200
 
 @app.route('/send_inquiry', methods=['POST'])
 def send_inquiry():
@@ -81,6 +91,7 @@ def login():
         flash('Invalid Username or Password')
     return render_template('login.html')
 
+# --- ADMIN ROUTES ---
 @app.route('/admin')
 @login_required
 def admin_dashboard():
@@ -103,10 +114,15 @@ def save_property():
         p.status = request.form.get('status')
         flash('Listing updated!')
     else: 
-        new_p = Property(title=request.form.get('title'), location=request.form.get('location'), 
-                         property_type=request.form.get('type'), price=float(request.form.get('price')), 
-                         features=request.form.get('features'), image_url=request.form.get('image_url'),
-                         status=request.form.get('status'))
+        new_p = Property(
+            title=request.form.get('title'), 
+            location=request.form.get('location'), 
+            property_type=request.form.get('type'), 
+            price=float(request.form.get('price')), 
+            features=request.form.get('features'), 
+            image_url=request.form.get('image_url'),
+            status=request.form.get('status')
+        )
         db.session.add(new_p)
         flash('New Listing Published!')
     
@@ -119,6 +135,7 @@ def delete(id):
     p = Property.query.get_or_404(id)
     db.session.delete(p)
     db.session.commit()
+    flash('Listing Deleted.')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/logout')
@@ -127,4 +144,5 @@ def logout():
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
