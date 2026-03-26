@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Namatui Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 p-6 font-['Montserrat']">
+    <div class="container mx-auto">
+        <div class="flex justify-between items-center mb-10 bg-black text-white p-8 rounded-3xl border-b-4 border-orange-500 shadow-2xl">
+            <h1 class="text-2xl font-black uppercase italic">Namatui Admin</h1>
+            <a href="/logout" class="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-orange-500 transition">Logout</a>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 overflow-y-auto max-h-[800px]">
+                <h2 class="text-xl font-black mb-8 border-b pb-4 uppercase">New Inquiries</h2>
+                <div class="space-y-6">
+                    {% for i in inquiries %}
+                    <div class="p-6 bg-slate-50 rounded-2xl border hover:border-orange-300 transition group">
+                        <div class="flex justify-between mb-2">
+                            <span class="font-black text-black uppercase text-xs">{{ i.customer_name }}</span>
+                            <span class="text-[9px] font-bold text-slate-400 italic">{{ i.timestamp.strftime('%Y-%m-%d') }}</span>
+                        </div>
+                        <p class="text-xs font-bold text-slate-600">📞 {{ i.customer_phone }} | 📧 {{ i.customer_email }}</p>
+                        <div class="mt-4 p-4 bg-white rounded-xl border border-slate-100 group-hover:bg-orange-50 transition">
+                            <p class="text-[9px] font-black text-orange-600 uppercase mb-2 italic">Customer Choice:</p>
+                            <p class="text-xs font-medium text-black">{{ i.selected_plots }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 h-fit sticky top-6">
+                <h2 class="text-xl font-black mb-8 border-b pb-4 uppercase">Publish Listing</h2>
+                <form action="/admin/upload" method="POST" class="space-y-4">
+                    <input type="text" name="title" placeholder="Listing Title" required class="w-full p-4 bg-slate-50 border rounded-xl outline-none font-bold text-sm focus:ring-2 ring-orange-400">
+                    <input type="text" name="location" placeholder="Area (Goba, Kigamboni...)" required class="w-full p-4 bg-slate-50 border rounded-xl outline-none font-bold text-sm focus:ring-2 ring-orange-400">
+                    <input type="text" name="type" placeholder="Type (Residential / Commercial)" required class="w-full p-4 bg-slate-50 border rounded-xl outline-none font-bold text-sm focus:ring-2 ring-orange-400">
+                    <input type="number" name="price" placeholder="Price (TZS)" required class="w-full p-4 bg-slate-50 border rounded-xl outline-none font-bold text-sm focus:ring-2 ring-orange-400">
+                    <input type="text" name="image_url" placeholder="Direct Image Link (URL)" required class="w-full p-4 bg-slate-50 border rounded-xl outline-none font-bold text-sm focus:ring-2 ring-orange-400">
+                    <textarea name="features" placeholder="Bullet features (e.g., Near water, Title deed ready...)" class="w-full p-4 bg-slate-50 border rounded-xl outline-none font-bold text-sm h-24 focus:ring-2 ring-orange-400"></textarea>
+                    <button class="w-full bg-black text-white py-4 rounded-xl font-black uppercase text-[10px] hover:bg-orange-500 shadow-xl transition">Publish Property</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
