@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login | Namatui Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-black min-h-screen flex items-center justify-center p-6 font-['Montserrat']">
+    <div class="bg-white p-12 rounded-3xl shadow-2xl w-full max-w-md border-t-8 border-orange-500">
+        <h2 class="text-3xl font-black mb-10 text-black uppercase italic">Admin Login</h2>
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}<p class="bg-red-50 text-red-600 p-4 rounded-xl text-[10px] font-black uppercase mb-6">{{ messages[0] }}</p>{% endif %}
+        {% endwith %}
+        <form action="/login" method="POST" class="space-y-4">
+            <input type="text" name="username" placeholder="Username" required class="w-full p-5 border rounded-xl outline-none font-bold focus:ring-2 ring-orange-500">
+            <input type="password" name="password" placeholder="Password" required class="w-full p-5 border rounded-xl outline-none font-bold focus:ring-2 ring-orange-500">
+            <button class="w-full bg-black text-white py-5 rounded-xl font-black uppercase tracking-widest text-xs shadow-xl hover:bg-orange-500 transition">Sign In</button>
+        </form>
+    </div>
+</body>
+</html>
